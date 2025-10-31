@@ -56,3 +56,6 @@
 
 # Sphinx output directories
 /docs/_build/
+
+# Nix Build
+result
