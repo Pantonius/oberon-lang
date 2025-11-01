@@ -38,7 +38,10 @@
             name = "oberon-lang";
             src = self;
             buildInputs = dependencies;
-            buildPhase = "make -j $NIX_BUILD_CORES";
+            buildPhase = ''
+              cmake . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+              make -j $NIX_BUILD_CORES
+            '';
 
             installPhase = ''
               runHook preInstall
