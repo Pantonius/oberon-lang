@@ -3,60 +3,63 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
-    flake-utils.url = "github:numtide/flake-utils";
+    flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
   outputs =
-    {
+    inputs@{
       self,
       nixpkgs,
-      flake-utils,
+      flake-parts,
+      ...
     }:
-    flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        overlays = [ ];
-        pkgs = import nixpkgs {
-          inherit system overlays;
-        };
-        cppDependencies = [
-          pkgs.libxml2
-          pkgs.gcc
-          pkgs.cmake
-          pkgs.boost
-          pkgs.llvmPackages_latest.llvm
-          (pkgs.python3.withPackages (python-pkgs: [
-            python-pkgs.lit
-            python-pkgs.filecheck
-            python-pkgs.sphinx
-            python-pkgs.sphinx_rtd_theme
-          ]))
-        ];
-        oberon-lang = pkgs.stdenv.mkDerivation {
-          name = "oberon-lang";
-          src = self;
-          buildInputs = cppDependencies;
-          buildPhase = "make -j $NIX_BUILD_CORES";
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = nixpkgs.lib.systems.flakeExposed;
 
-          installPhase = ''
-            runHook preInstall
-            mkdir -p $out/bin
-            mv $TMP/source/build/olang/oberon-lang $out/bin
-            mv $TMP/source/build/stdlib $out/bin
-            runHook postInstall
-          '';
-        };
-      in
-      rec {
-        defaultApp = flake-utils.lib.mkApp {
-          drv = defaultPackage;
-        };
-        defaultPackage = oberon-lang;
-        devShell = pkgs.mkShell {
-          buildInputs = [
-            oberon-lang
+      perSystem =
+        { self', pkgs, ... }:
+        let
+          dependencies = [
+            pkgs.libxml2
+            pkgs.gcc
+            pkgs.cmake
+            pkgs.boost
+            pkgs.llvmPackages_latest.llvm
+            (pkgs.python3.withPackages (python-pkgs: [
+              python-pkgs.lit
+              python-pkgs.filecheck
+              python-pkgs.sphinx
+              python-pkgs.sphinx_rtd_theme
+            ]))
           ];
+        in
+        {
+          packages.default = pkgs.stdenv.mkDerivation {
+            name = "oberon-lang";
+            src = self;
+            buildInputs = dependencies;
+            buildPhase = "make -j $NIX_BUILD_CORES";
+
+            installPhase = ''
+              runHook preInstall
+
+              mkdir -p $out/bin $out/lib
+              mv $TMP/source/build/olang/oberon-lang $out/bin
+              mv $TMP/source/build/stdlib/* $out/lib
+
+              runHook postInstall
+            '';
+
+          };
+
+          apps.default = {
+            type = "app";
+            program = "${self'.packages.default}/bin/oberon-lang";
+          };
+
+          devShells.default = pkgs.mkShell {
+            buildInputs = dependencies;
+          };
         };
-      }
-    );
+    };
 }
