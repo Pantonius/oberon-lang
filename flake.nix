@@ -18,41 +18,9 @@
 
       perSystem =
         { self', pkgs, ... }:
-        let
-          dependencies = [
-            pkgs.libxml2
-            pkgs.gcc
-            pkgs.cmake
-            pkgs.boost
-            pkgs.llvmPackages_latest.llvm
-            (pkgs.python3.withPackages (python-pkgs: [
-              python-pkgs.lit
-              python-pkgs.filecheck
-              python-pkgs.sphinx
-              python-pkgs.sphinx_rtd_theme
-            ]))
-          ];
-        in
         {
-          packages.default = pkgs.stdenv.mkDerivation {
-            name = "oberon-lang";
-            src = self;
-            buildInputs = dependencies;
-            buildPhase = ''
-              cmake . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
-              cmake --build . --parallel $NIX_BUILD_CORES
-            '';
-
-            installPhase = ''
-              runHook preInstall
-
-              mkdir -p $out/bin $out/lib
-              mv $TMP/source/build/olang/oberon-lang $out/bin
-              mv $TMP/source/build/stdlib/* $out/lib
-
-              runHook postInstall
-            '';
-
+          packages.default = pkgs.callPackage ./default.nix {
+            inherit pkgs;
           };
 
           apps.default = {
@@ -61,7 +29,7 @@
           };
 
           devShells.default = pkgs.mkShell {
-            buildInputs = dependencies;
+            buildInputs = import ./dependencies.nix { inherit pkgs; };
           };
         };
     };
