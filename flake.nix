@@ -40,7 +40,7 @@
             buildInputs = dependencies;
             buildPhase = ''
               cmake . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
-              make -j $NIX_BUILD_CORES
+              cmake --build . --parallel $NIX_BUILD_CORES
             '';
 
             installPhase = ''
