@@ -24,10 +24,8 @@ pkgs.stdenv.mkDerivation rec {
     runHook preInstall
 
     mkdir -p $out/bin $out/lib
-    ls $TMP
-    ls $TMP/${pname}
-    mv $TMP/${pname}/build/olang/oberon-lang $out/bin
-    mv $TMP/${pname}/build/stdlib/* $out/lib
+    mv olang/oberon-lang $out/bin
+    mv stdlib/* $out/lib
 
     runHook postInstall
   '';
