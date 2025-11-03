@@ -1,10 +1,9 @@
 {
   pkgs,
-  name ? "oberon-lang",
 }:
 
 pkgs.stdenv.mkDerivation rec {
-  pname = name;
+  pname = "oberon-lang";
   version = "0.2.0";
 
   src = ./.;
@@ -23,9 +22,11 @@ pkgs.stdenv.mkDerivation rec {
   installPhase = ''
     runHook preInstall
 
-    mkdir -p $out/bin $out/lib
+    mkdir -p $out/bin $out/lib $out/include
     mv olang/oberon-lang $out/bin
-    mv stdlib/* $out/lib
+    mv stdlib/liboberon.so $out/lib
+    mv stdlib/static/liboberon.a $out/lib
+    mv stdlib/*.smb $out/include
 
     runHook postInstall
   '';
