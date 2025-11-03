@@ -1,18 +1,18 @@
 {
   pkgs,
+  makeWrapper,
 }:
-
 pkgs.stdenv.mkDerivation rec {
   pname = "oberon-lang";
   version = "0.2.0";
 
   src = ./.;
 
-  buildInputs = (
-    import ./dependencies.nix {
+  buildInputs =
+    (import ./dependencies.nix {
       inherit pkgs;
-    }
-  );
+    })
+    ++ [ makeWrapper ];
 
   buildPhase = ''
     cmake . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
@@ -27,6 +27,9 @@ pkgs.stdenv.mkDerivation rec {
     mv stdlib/liboberon.so $out/lib
     mv stdlib/static/liboberon.a $out/lib
     mv stdlib/*.smb $out/include
+
+    makeWrapper $out/bin/oberon-lang $out/bin/oli \
+      --add-flags "-L $out/lib -I $out/include -loberon -r"
 
     runHook postInstall
   '';
